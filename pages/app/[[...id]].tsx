@@ -10,6 +10,7 @@ import DocPane from '../../components/docPane'
 import NewFolderDialog from '../../components/newFolderDialog'
 import { GetServerSidePropsContext } from 'next'
 import { getSession, useSession } from 'next-auth/client'
+import { folder, doc, connectToDB } from '../../db'
 
 const App: FC<{ folders?: any[]; activeFolder?: any; activeDoc?: any; activeDocs?: any[] }> = ({
   folders,
@@ -78,13 +79,33 @@ App.defaultProps = {
   folders: [],
 }
 
-export async function getServerSideProps(ctx: GetServerSidePropsContext) {
-  const session = await getSession(ctx)
+export async function getServerSideProps(context) {
+  const session: { user: UserSession } = await getSession(context)
+  // not signed in
+  if (!session || !session.user) {
+    return { props: {} }
+  }
+
+  const props: any = { session }
+  const { db } = await connectToDB()
+  const folders = await folder.getFolders(db, session.user.id)
+  props.folders = folders
+
+  if (context.params.id) {
+    const activeFolder = folders.find((f) => f._id === context.params.id[0])
+    const activeDocs = await doc.getDocsByFolder(db, activeFolder._id)
+    props.activeFolder = activeFolder
+    props.activeDocs = activeDocs
+
+    const activeDocId = context.params.id[1]
+
+    if (activeDocId) {
+      props.activeDoc = await doc.getOneDoc(db, activeDocId)
+    }
+  }
 
   return {
-    props: {
-      session,
-    },
+    props,
   }
 }
 
