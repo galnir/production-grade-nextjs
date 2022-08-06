@@ -51,6 +51,7 @@ export function getStaticProps(ctx) {
 
   return {
     props: { posts },
+    preview: ctx.preview,
   }
 }
 

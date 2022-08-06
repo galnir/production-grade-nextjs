@@ -90,6 +90,7 @@ export async function getStaticProps({ params, preview }) {
     props: {
       source: mdxSource,
       frontMatter: data,
+      preview,
     },
   }
 }
